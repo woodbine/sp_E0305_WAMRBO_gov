@@ -57,7 +57,7 @@ def convert_mth_strings ( mth_string ):
     return mth_string
 # pull down the content from the webpage
 html = urllib2.urlopen(url)
-soup = BeautifulSoup(html)
+soup = BeautifulSoup(html, 'lxml')
 # find all entries with the required class
 block = soup.find('ul', attrs = {'class':'item-list'})
 links = block.findAll('a')
@@ -69,7 +69,7 @@ for link in links:
         filename = entity_id + "_" + csvYr + "_" + csvMth
         todays_date = str(datetime.now())
         html_csv = urllib2.urlopen(url)
-        soup_csv = BeautifulSoup(html_csv)
+        soup_csv = BeautifulSoup(html_csv, 'lxml')
         url_csv = soup_csv.find('a', 'button button__success')['href']
         file_url = url_csv.strip()
         validFilename = validateFilename(filename)
