@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-#### IMPORTS 1.0
+#### IMPORTS 1.1
 
 import os
 import re
@@ -8,6 +8,7 @@ import scraperwiki
 import urllib2
 from datetime import datetime
 from bs4 import BeautifulSoup
+import requests
 
 #### FUNCTIONS 1.0
 
@@ -37,19 +38,19 @@ def validateFilename(filename):
 
 def validateURL(url):
     try:
-        r = urllib2.urlopen(url)
+        r = requests.get(url)
         count = 1
-        while r.getcode() == 500 and count < 4:
+        while r.status_code == 500 and count < 4:
             print ("Attempt {0} - Status code: {1}. Retrying.".format(count, r.status_code))
             count += 1
-            r = urllib2.urlopen(url)
+            r = requests.get(url)
         sourceFilename = r.headers.get('Content-Disposition')
 
         if sourceFilename:
             ext = os.path.splitext(sourceFilename)[1].replace('"', '').replace(';', '').replace(' ', '')
         else:
             ext = os.path.splitext(url)[1]
-        validURL = r.getcode() == 200
+        validURL = r.status_code == 200
         validFiletype = ext.lower() in ['.csv', '.xls', '.xlsx']
         return validURL, validFiletype
     except:
@@ -90,22 +91,18 @@ data = []
 
 #### READ HTML 1.0
 
-html = urllib2.urlopen(url)
-soup = BeautifulSoup(html, 'lxml')
+html = requests.get(url)
+soup = BeautifulSoup(html.text, 'lxml')
 
 
 #### SCRAPE DATA
 
-block = soup.find('ul', attrs = {'class':'item-list'})
-links = block.findAll('a')
+
+links = soup.find_all('a', 'download__cta')
 for link in links:
     url = link['href']
-    html_csv = urllib2.urlopen(url)
-    soup_csv = BeautifulSoup(html_csv, 'lxml')
-    url_csv = soup_csv.find('a', 'button button__success')['href']
-    url = url_csv.strip()
-    csvYr = link.text.strip()[:4]
-    csvMth = link.text.strip().split(' ')[-1][:3]
+    csvYr = url.split('_')[0].split('/')[-1]
+    csvMth = url.split('_')[-1][:3]
     csvMth = convert_mth_strings(csvMth.upper())
     data.append([csvYr, csvMth, url])
 
